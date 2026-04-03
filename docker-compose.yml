@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # 个人网站 - 全栈服务 (前端 + 后端)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: personal-website:latest
+    container_name: personal-website
+    restart: unless-stopped
+    ports:
+      - "80:80"      # 前端 (通过 nginx)
+      - "8080:8080"  # 后端 API (可选，主要用于调试)
+    volumes:
+      # 数据持久化 - H2 数据库文件
+      - ./data:/app/data
+      # 日志持久化
+      - ./logs:/var/log/supervisor
+    environment:
+      # JVM 配置
+      - JAVA_OPTS=-Xms256m -Xmx512m
+      # Spring Boot 配置
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=8080
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/public/profile"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - personal-website-network
+
+networks:
+  personal-website-network:
+    driver: bridge
+
+# 数据卷说明:
+# ./data - H2 数据库文件存储
+# ./logs - 应用日志存储
+# 
+# 使用方法:
+# 1. 构建并启动: docker-compose up -d --build
+# 2. 查看日志: docker-compose logs -f
+# 3. 停止服务: docker-compose down
+# 4. 进入容器: docker exec -it personal-website sh

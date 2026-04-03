@@ -1,0 +1,46 @@
+# 生产环境配置
+spring:
+  application:
+    name: personal-website
+  
+  # H2 数据库配置 (生产环境建议使用外部数据库)
+  datasource:
+    url: jdbc:h2:file:/app/data/personal_website;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  # JPA 配置
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+  
+  # H2 控制台 (生产环境建议关闭)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: true
+
+# 服务器配置
+server:
+  port: 8080
+  address: 0.0.0.0
+
+# JWT 配置
+jwt:
+  secret: your-production-secret-key-change-this-in-production
+  expiration: 86400000
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.personal.website: INFO
+  file:
+    name: /var/log/supervisor/application.log

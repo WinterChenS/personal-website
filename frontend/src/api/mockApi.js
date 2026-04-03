@@ -1,0 +1,207 @@
+// 简易启动脚本 - 仅前端模式
+// 使用 Mock 数据演示，无需后端
+
+// Mock 数据 - 文章
+const mockArticles = [
+  {
+    id: 1,
+    title: '深入理解 React 18 新特性',
+    summary: '探索 React 18 带来的并发渲染、自动批处理、Suspense 等激动人心的新特性，了解它们如何提升应用性能。',
+    content: '# 深入理解 React 18 新特性\n\nReact 18 带来了许多重要的改进...',
+    category: '前端开发',
+    tags: 'React,JavaScript,前端',
+    coverImage: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800',
+    published: true,
+    views: 1256,
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+  },
+  {
+    id: 2,
+    title: 'Spring Boot 3.2 新特性详解',
+    summary: '全面解析 Spring Boot 3.2 版本的新特性，包括虚拟线程支持、Native Image 改进、Observability 增强。',
+    content: '# Spring Boot 3.2 新特性详解\n\nSpring Boot 3.2 带来了...',
+    category: '后端开发',
+    tags: 'Spring Boot,Java,微服务',
+    coverImage: 'https://images.unsplash.com/photo-1618477247427-5e0a8f7b5b8e?w=800',
+    published: true,
+    views: 892,
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString()
+  },
+  {
+    id: 3,
+    title: '使用 TailwindCSS 构建现代UI',
+    summary: '学习如何使用 TailwindCSS 快速构建响应式、现代化的用户界面，掌握实用类优先的设计理念。',
+    content: '# 使用 TailwindCSS 构建现代UI\n\nTailwindCSS 是一个功能强大的...',
+    category: '前端开发',
+    tags: 'TailwindCSS,CSS,设计',
+    coverImage: 'https://images.unsplash.com/photo-1507721999472-82444ab8310f?w=800',
+    published: true,
+    views: 654,
+    createdAt: new Date(Date.now() - 86400000 * 7).toISOString()
+  },
+  {
+    id: 4,
+    title: 'Docker 容器化最佳实践',
+    summary: '掌握 Docker 容器化的核心概念和最佳实践，包括多阶段构建、镜像优化、安全配置等。',
+    content: '# Docker 容器化最佳实践\n\nDocker 已经成为现代开发的必备工具...',
+    category: 'DevOps',
+    tags: 'Docker,容器,DevOps',
+    coverImage: 'https://images.unsplash.com/photo-1605745341112-85968b19335b?w=800',
+    published: true,
+    views: 1123,
+    createdAt: new Date(Date.now() - 86400000 * 10).toISOString()
+  },
+  {
+    id: 5,
+    title: 'TypeScript 高级类型技巧',
+    summary: '深入学习 TypeScript 的高级类型系统，包括条件类型、映射类型、模板字面量类型等。',
+    content: '# TypeScript 高级类型技巧\n\nTypeScript 的类型系统非常强大...',
+    category: '前端开发',
+    tags: 'TypeScript,JavaScript,类型系统',
+    coverImage: 'https://images.unsplash.com/photo-1516116216623-1e6289f4c8f0?w=800',
+    published: true,
+    views: 789,
+    createdAt: new Date(Date.now() - 86400000 * 14).toISOString()
+  },
+  {
+    id: 6,
+    title: '微服务架构设计模式',
+    summary: '探索微服务架构中常用的设计模式，学习如何构建可扩展、可维护的分布式系统。',
+    content: '# 微服务架构设计模式\n\n微服务架构已经成为企业级应用的主流选择...',
+    category: '架构设计',
+    tags: '微服务,架构,设计模式',
+    coverImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800',
+    published: true,
+    views: 1567,
+    createdAt: new Date(Date.now() - 86400000 * 20).toISOString()
+  }
+]
+
+// Mock 数据 - 项目
+const mockProjects = [
+  {
+    id: 1,
+    name: '个人作品集网站',
+    description: '一个现代化的个人作品集网站，展示项目、文章和技能，支持深色模式和响应式设计',
+    techStack: 'React,TypeScript,TailwindCSS,Framer Motion',
+    githubUrl: 'https://github.com/username/portfolio',
+    demoUrl: 'https://portfolio.example.com',
+    featured: true,
+    stars: 156
+  },
+  {
+    id: 2,
+    name: 'API 网关服务',
+    description: '高性能的 API 网关服务，支持动态路由、限流熔断、负载均衡和可观测性',
+    techStack: 'Go,Gin,Docker,Kubernetes,Redis',
+    githubUrl: 'https://github.com/username/api-gateway',
+    demoUrl: 'https://gateway.example.com',
+    featured: true,
+    stars: 234
+  },
+  {
+    id: 3,
+    name: '任务调度平台',
+    description: '分布式任务调度平台，支持 DAG 工作流、任务依赖、失败重试和可视化监控',
+    techStack: 'Java,Spring Boot,Quartz,Vue.js,PostgreSQL',
+    githubUrl: 'https://github.com/username/task-scheduler',
+    featured: true,
+    stars: 89
+  },
+  {
+    id: 4,
+    name: '实时协作编辑器',
+    description: '基于 CRDT 的实时协作编辑器，支持多人同时编辑、离线同步和版本历史',
+    techStack: 'React,Yjs,WebSocket,Node.js,MongoDB',
+    githubUrl: 'https://github.com/username/collab-editor',
+    demoUrl: 'https://editor.example.com',
+    featured: false,
+    stars: 67
+  },
+  {
+    id: 5,
+    name: '智能监控系统',
+    description: '基于 Prometheus + Grafana 的智能监控告警系统，支持自定义指标和智能告警',
+    techStack: 'Go,Prometheus,Grafana,ClickHouse,Python',
+    githubUrl: 'https://github.com/username/smart-monitor',
+    featured: false,
+    stars: 45
+  },
+  {
+    id: 6,
+    name: 'AI 图片生成器',
+    description: '使用 Stable Diffusion 的 AI 图片生成工具，支持文字生图、图片生图和风格迁移',
+    techStack: 'Python,FastAPI,Stable Diffusion,React',
+    githubUrl: 'https://github.com/username/ai-image-gen',
+    demoUrl: 'https://ai-art.example.com',
+    featured: true,
+    stars: 312
+  }
+]
+
+// Mock 数据 - 技能
+const mockSkills = [
+  // 前端
+  { id: 1, name: 'React', category: '前端开发', proficiency: 95, displayOrder: 1 },
+  { id: 2, name: 'TypeScript', category: '前端开发', proficiency: 92, displayOrder: 2 },
+  { id: 3, name: 'Vue.js', category: '前端开发', proficiency: 85, displayOrder: 3 },
+  { id: 4, name: 'TailwindCSS', category: '前端开发', proficiency: 90, displayOrder: 4 },
+  { id: 5, name: 'Next.js', category: '前端开发', proficiency: 88, displayOrder: 5 },
+  
+  // 后端
+  { id: 6, name: 'Java', category: '后端开发', proficiency: 92, displayOrder: 1 },
+  { id: 7, name: 'Spring Boot', category: '后端开发', proficiency: 90, displayOrder: 2 },
+  { id: 8, name: 'Go', category: '后端开发', proficiency: 82, displayOrder: 3 },
+  { id: 9, name: 'Node.js', category: '后端开发', proficiency: 85, displayOrder: 4 },
+  { id: 10, name: 'Python', category: '后端开发', proficiency: 80, displayOrder: 5 },
+  
+  // DevOps
+  { id: 11, name: 'Docker', category: 'DevOps', proficiency: 88, displayOrder: 1 },
+  { id: 12, name: 'Kubernetes', category: 'DevOps', proficiency: 75, displayOrder: 2 },
+  { id: 13, name: 'CI/CD', category: 'DevOps', proficiency: 85, displayOrder: 3 },
+  { id: 14, name: 'Linux', category: 'DevOps', proficiency: 82, displayOrder: 4 },
+]
+
+// Mock 数据 - 用户资料
+const mockProfile = {
+  nickname: 'Claw',
+  bio: '全栈开发者，热爱技术与开源。专注于构建优雅的解决方案，从全栈开发到系统架构，始终保持学习的热情。',
+  location: '中国',
+  github: 'https://github.com/claw',
+  twitter: 'https://twitter.com/claw',
+  linkedin: 'https://linkedin.com/in/claw',
+  emailPublic: 'hello@example.com',
+  tags: '全栈开发者,技术爱好者,终身学习者,开源贡献者',
+  welcomeText: '👋 Hello, I\'m',
+  ctaTitle: '开始合作',
+  ctaDescription: '有想法？想要合作？或者只是想打个招呼？随时联系我！',
+  coffeeCount: 1000,
+  starsCount: 1000
+}
+
+// Mock 数据 - 统计数据
+const mockStats = {
+  coffeeCount: 1000,
+  projectCount: 50,
+  articleCount: 100,
+  starsCount: 1000
+}
+
+// 导出 API 方法
+export default {
+  getArticles: () => mockArticles,
+  getProjects: () => mockProjects,
+  getSkills: () => mockSkills,
+  getProfile: () => mockProfile,
+  getStats: () => mockStats
+}
+
+// Hook 形式导出
+export function useMockApi() {
+  return {
+    articles: mockArticles,
+    projects: mockProjects,
+    skills: mockSkills,
+    profile: mockProfile
+  }
+}

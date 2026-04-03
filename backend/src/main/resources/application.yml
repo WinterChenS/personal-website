@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: personal-website
+  
+  datasource:
+    url: jdbc:h2:file:./data/personal_website;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+jwt:
+  secret: your-256-bit-secret-key-for-jwt-token-generation-min-32-characters
+  expiration: 86400000
+
+cors:
+  allowed-origins: http://localhost:3000,http://localhost:5173
+
+logging:
+  level:
+    com.personal.website: DEBUG

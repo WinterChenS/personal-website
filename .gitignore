@@ -1,0 +1,37 @@
+# 依赖目录
+node_modules/
+frontend/node_modules/
+backend/target/
+
+# 构建输出
+frontend/dist/
+backend/build/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+npm-debug.log*
+
+# 环境变量
+.env
+.env.local
+
+# H2 数据库
+*.db
+*.db.lock
+*.db.trace.db
+
+# Maven
+backend/.mvn/wrapper/maven-wrapper.jar
+
+# 临时文件
+*.tmp
+*.temp
