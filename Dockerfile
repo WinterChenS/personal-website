@@ -11,8 +11,8 @@ WORKDIR /app/frontend
 # 复制前端依赖文件
 COPY frontend/package*.json ./
 
-# 安装依赖
-RUN npm ci --legacy-peer-deps
+# 安装依赖（使用 npm install 替代 npm ci）
+RUN npm install --legacy-peer-deps
 
 # 复制前端源码
 COPY frontend/ ./
