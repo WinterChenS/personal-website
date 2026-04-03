@@ -2,26 +2,7 @@
 # 包含前端(React)和后端(Spring Boot)在一个容器中
 
 # ================================
-# Stage 1: 构建前端
-# ================================
-FROM node:20-alpine AS frontend-builder
-
-WORKDIR /app/frontend
-
-# 复制前端依赖文件
-COPY frontend/package*.json ./
-
-# 安装依赖（使用 npm install 替代 npm ci）
-RUN npm install --legacy-peer-deps
-
-# 复制前端源码
-COPY frontend/ ./
-
-# 构建前端
-RUN npm run build
-
-# ================================
-# Stage 2: 构建后端
+# Stage 1: 构建后端
 # ================================
 FROM maven:3.9-eclipse-temurin-21-alpine AS backend-builder
 
@@ -40,7 +21,7 @@ COPY backend/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================
-# Stage 3: 生产镜像 (Ubuntu)
+# Stage 2: 生产镜像 (Ubuntu)
 # ================================
 FROM ubuntu:22.04
 
@@ -62,8 +43,8 @@ WORKDIR /app
 # 从构建阶段复制后端 JAR
 COPY --from=backend-builder /app/backend/target/*.jar app.jar
 
-# 从构建阶段复制前端构建产物
-COPY --from=frontend-builder /app/frontend/dist /var/www/html
+# 复制本地预构建的前端产物
+COPY frontend/dist /var/www/html
 
 # 复制 nginx 配置
 COPY docker/nginx.conf /etc/nginx/http.d/default.conf
