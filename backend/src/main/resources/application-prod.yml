@@ -3,12 +3,12 @@ spring:
   application:
     name: personal-website
   
-  # H2 数据库配置 (生产环境建议使用外部数据库)
+  # MySQL 数据库配置
   datasource:
-    url: jdbc:h2:file:/app/data/personal_website;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: 
+    url: jdbc:mysql://192.168.3.11:3306/personal_website?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: cdh.2580
   
   # JPA 配置
   jpa:
@@ -18,14 +18,6 @@ spring:
     properties:
       hibernate:
         format_sql: false
-  
-  # H2 控制台 (生产环境建议关闭)
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-      settings:
-        web-allow-others: true
 
 # 服务器配置
 server:
