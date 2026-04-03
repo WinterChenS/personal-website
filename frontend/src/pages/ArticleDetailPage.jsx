@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowLeft, Calendar, Eye, Clock, User, Share2, Bookmark, Heart, Tag } from 'lucide-react'
+import { Calendar, Eye, Clock, User, Share2, Bookmark, Heart, Tag } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import rehypeHighlight from 'rehype-highlight'
 
 export default function ArticleDetailPage() {
   const { id } = useParams()
@@ -55,7 +57,7 @@ export default function ArticleDetailPage() {
           <p className="text-gray-500 mb-6">该文章可能已被删除或移除</p>
           <Link 
             to="/blog" 
-            className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full font-medium hover:shadow-lg transition-shadow"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-full font-medium hover:shadow-lg transition-all hover:scale-105"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>返回博客</span>
@@ -77,101 +79,68 @@ export default function ArticleDetailPage() {
   const gradient = categoryGradients[article.category] || categoryGradients['默认']
 
   return (
-    <div className="min-h-screen relative">
-      {/* 背景装饰 */}
-      <div className="absolute inset-0 bg-gradient-to-b from-indigo-50/50 via-white to-white pointer-events-none" />
-      <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl" />
-
-      {/* 封面区域 */}
-      {article.coverImage && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="relative h-[50vh] overflow-hidden"
+    <div className="min-h-screen bg-white">
+      {/* Notion风格 - 顶部区域 */}
+      <div className="max-w-4xl mx-auto px-4 pt-28 pb-8">
+        {/* 第一行：返回按钮 */}
+        <a 
+          href="/blog"
+          className="inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-700 transition-colors duration-200 mb-6"
         >
-          <img
-            src={article.coverImage}
-            alt={article.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/50 to-transparent" />
-        </motion.div>
-      )}
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          <span className="text-sm">返回</span>
+        </a>
+        
+        {/* 第二行：分类 + 标题 */}
+        <div className="mb-4">
+          {article.category && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="mb-3"
+            >
+              <span className="inline-block px-2.5 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-md">
+                {article.category}
+              </span>
+            </motion.div>
+          )}
+          
+          {/* 标题 */}
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 leading-tight">
+            {article.title}
+          </h1>
+        </div>
+        
+        {/* 第三行：元信息 */}
+        <div className="flex items-center gap-4 text-gray-400 text-sm pb-6 border-b border-gray-100">
+          <span>{new Date(article.createdAt).toLocaleDateString('zh-CN')}</span>
+          <span>·</span>
+          <span>{article.views || 0} 阅读</span>
+        </div>
+      </div>
 
+      {/* 文章内容 - Notion风格简洁区域 */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="relative max-w-4xl mx-auto px-4 py-12"
+        className="max-w-4xl mx-auto px-4 pt-8 pb-12"
       >
-        {/* 返回按钮 */}
-        <Link 
-          to="/blog" 
-          className="inline-flex items-center space-x-2 text-gray-600 hover:text-indigo-600 mb-8 group transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          <span>返回博客</span>
-        </Link>
-
-        {/* 文章头部 */}
-        <div className="mb-8">
-          {/* 分类标签 */}
-          {article.category && (
-            <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className={`inline-block px-4 py-1.5 bg-gradient-to-r ${gradient} text-white text-sm font-semibold rounded-full mb-4 shadow-lg`}
-            >
-              {article.category}
-            </motion.span>
-          )}
-
-          {/* 标题 */}
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
-            {article.title}
-          </h1>
-
-          {/* 元信息 */}
-          <div className="flex flex-wrap items-center gap-6 text-gray-500">
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
-                <User className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Claw</p>
-                <p className="text-xs">全栈开发者</p>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-1">
-              <Calendar className="w-4 h-4" />
-              <span>{new Date(article.createdAt).toLocaleDateString('zh-CN')}</span>
-            </div>
-
-            <div className="flex items-center space-x-1">
-              <Clock className="w-4 h-4" />
-              <span>5 分钟阅读</span>
-            </div>
-
-            <div className="flex items-center space-x-1">
-              <Eye className="w-4 h-4" />
-              <span>{article.views || 0} 次阅读</span>
-            </div>
-          </div>
-
-          {/* 分割线 */}
-          <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mt-8" />
-        </div>
-
-        {/* 文章内容 */}
+        {/* 文章内容 - 优化Markdown渲染样式 */}
         <motion.article
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-a:text-indigo-600 hover:prose-a:text-indigo-700 prose-code:bg-gray-100 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-indigo-600"
+          className="article-content"
         >
-          <ReactMarkdown>{article.content}</ReactMarkdown>
+          <ReactMarkdown 
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeHighlight]}
+          >
+            {article.content}
+          </ReactMarkdown>
         </motion.article>
 
         {/* 标签区域 */}
