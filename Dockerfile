@@ -40,16 +40,21 @@ COPY backend/src ./src
 RUN mvn clean package -DskipTests -B
 
 # ================================
-# Stage 3: 生产镜像
+# Stage 3: 生产镜像 (Ubuntu)
 # ================================
-FROM eclipse-temurin:21-jre-alpine
+FROM ubuntu:22.04
 
 LABEL maintainer="Claw"
 LABEL description="Personal Website - Full Stack (Frontend + Backend)"
 LABEL version="1.0"
 
-# 安装 nginx 用于服务前端静态文件
-RUN apk add --no-cache nginx supervisor
+# 安装 nginx 和 supervisor
+RUN apt-get update && apt-get install -y \
+    nginx \
+    supervisor \
+    openjdk-21-jre-headless \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
 
 # 创建应用目录
 WORKDIR /app
