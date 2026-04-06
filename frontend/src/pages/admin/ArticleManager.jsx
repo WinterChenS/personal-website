@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, X, FileText, Tag, Calendar, Check, Loader, Save, Eye } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Plus, Edit2, Trash2, X, FileText, Tag, Calendar, Check, Loader, Save, Eye, Hash } from 'lucide-react'
 import RichTextEditor from '../../components/RichTextEditor'
 
 const API_BASE = 'http://localhost:8080'
@@ -15,7 +15,7 @@ export default function ArticleManager() {
     summary: '', 
     content: '', 
     category: '', 
-    tags: '', 
+    tags: [], 
     published: true,
     coverImage: ''
   })
@@ -29,15 +29,36 @@ export default function ArticleManager() {
   const fetchArticles = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/api/admin/articles?page=0&size=100`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      const data = await res.json()
-      setArticles(data.content || [])
+      const tokenValue = localStorage.getItem('token')
+      const headers = {}
+      if (tokenValue) {
+        headers['Authorization'] = `Bearer ${tokenValue}`
+      }
+      
+      const res = await fetch(`${API_BASE}/api/admin/articles?page=0&size=100`, { headers })
+      
+      if (!res.ok) {
+        console.error('获取文章列表失败:', res.status)
+        const text = await res.text()
+        console.error('Error response:', text)
+        setArticles([])
+        return
+      }
+      
+      const text = await res.text()
+      let data
+      try {
+        data = JSON.parse(text)
+      } catch {
+        console.error('Invalid JSON response:', text)
+        setArticles([])
+        return
+      }
+      
+      setArticles(Array.isArray(data) ? data : (data.content || []))
     } catch (err) {
       console.error('获取文章列表失败:', err)
+      setArticles([])
     } finally {
       setLoading(false)
     }
@@ -59,7 +80,7 @@ export default function ArticleManager() {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(form)
+        body: JSON.stringify({ ...form, tags: form.tags.join(',') })
       })
       
       if (res.ok) {
@@ -70,7 +91,7 @@ export default function ArticleManager() {
           summary: '', 
           content: '', 
           category: '', 
-          tags: '', 
+          tags: [], 
           published: true,
           coverImage: '' 
         })
@@ -93,7 +114,7 @@ export default function ArticleManager() {
       summary: article.summary || '',
       content: article.content || '',
       category: article.category || '',
-      tags: article.tags || '',
+      tags: article.tags ? article.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
       published: article.published,
       coverImage: article.coverImage || ''
     })
@@ -137,7 +158,7 @@ export default function ArticleManager() {
               summary: '', 
               content: '', 
               category: '', 
-              tags: '', 
+              tags: [], 
               published: true,
               coverImage: '' 
             })
@@ -168,6 +189,7 @@ export default function ArticleManager() {
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">标题</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">分类</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">状态</th>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">阅读量</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">创建时间</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">操作</th>
               </tr>
@@ -199,6 +221,12 @@ export default function ArticleManager() {
                     }`}>
                       {article.published && <Check className="w-3 h-3" />}
                       {article.published ? '已发布' : '草稿'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="inline-flex items-center gap-1 text-sm text-gray-600">
+                      <Eye className="w-3 h-3" />
+                      {article.views || 0}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
@@ -334,24 +362,13 @@ export default function ArticleManager() {
                     />
                   </div>
                   
+                  {/* TagInput 组件 */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">标签</label>
-                    <input
-                      type="text"
-                      placeholder="用逗号分隔多个标签"
-                      value={form.tags}
-                      onChange={e => setForm({ ...form, tags: e.target.value })}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                    <TagInput 
+                      tags={form.tags} 
+                      onChange={(tags) => setForm({ ...form, tags })} 
                     />
-                    {form.tags && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {form.tags.split(',').map((tag, i) => (
-                          <span key={i} className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs rounded-full">
-                            {tag.trim()}
-                          </span>
-                        ))}
-                      </div>
-                    )}
                   </div>
                   
                   <label className="flex items-center gap-3 p-3 bg-white rounded-xl cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200">
@@ -386,6 +403,69 @@ export default function ArticleManager() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+// ========== TagInput 组件 ==========
+function TagInput({ tags, onChange }) {
+  const [inputValue, setInputValue] = useState('')
+  const inputRef = useRef(null)
+
+  const addTag = (tagText) => {
+    const tag = tagText.trim()
+    if (tag && !tags.includes(tag)) {
+      onChange([...tags, tag])
+    }
+    setInputValue('')
+  }
+
+  const removeTag = (indexToRemove) => {
+    onChange(tags.filter((_, i) => i !== indexToRemove))
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      addTag(inputValue)
+    } else if (e.key === ',' || e.key === '，') {
+      e.preventDefault()
+      addTag(inputValue)
+    } else if (e.key === 'Backspace' && !inputValue && tags.length > 0) {
+      removeTag(tags.length - 1)
+    }
+  }
+
+  return (
+    <div className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500 bg-white flex flex-wrap items-center gap-2 min-h-[46px]">
+      {tags.map((tag, index) => (
+        <motion.span
+          key={tag}
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.8, opacity: 0 }}
+          className="inline-flex items-center gap-1 px-2.5 py-1 bg-purple-100 text-purple-700 text-sm rounded-full"
+        >
+          <Hash className="w-3 h-3" />
+          {tag}
+          <button
+            type="button"
+            onClick={() => removeTag(index)}
+            className="ml-0.5 hover:text-purple-900 hover:bg-purple-200 rounded-full p-0.5 transition-colors"
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </motion.span>
+      ))}
+      <input
+        ref={inputRef}
+        type="text"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder={tags.length === 0 ? '输入标签后按回车或逗号添加' : '继续添加...'}
+        className="flex-1 min-w-[120px] outline-none bg-transparent text-sm py-1"
+      />
     </div>
   )
 }

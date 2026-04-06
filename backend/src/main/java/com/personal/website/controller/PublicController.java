@@ -7,6 +7,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,16 +35,57 @@ public class PublicController {
     @GetMapping("/articles")
     public ResponseEntity<Page<Article>> getArticles(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String tag) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        
+        // 如果传了 tag 参数，按标签筛选
+        if (tag != null && !tag.isBlank()) {
+            List<Article> taggedArticles = articleRepository.findByTagsContaining(tag.trim());
+            // 手动分页（仅返回已发布的）
+            List<Article> publishedFiltered = taggedArticles.stream()
+                .filter(Article::getPublished)
+                .toList();
+            int start = (int) pageable.getOffset();
+            int end = Math.min(start + size, publishedFiltered.size());
+            List<Article> pageContent = start < publishedFiltered.size() 
+                ? publishedFiltered.subList(start, end) 
+                : List.of();
+            // 构造手动分页结果
+            Page<Article> resultPage = new org.springframework.data.domain.PageImpl<>(
+                pageContent, pageable, publishedFiltered.size());
+            return ResponseEntity.ok(resultPage);
+        }
+        
         return ResponseEntity.ok(articleRepository.findByPublishedTrue(pageable));
+    }
+    
+    @GetMapping("/tags")
+    public ResponseEntity<List<String>> getAllTags() {
+        List<Article> articles = articleRepository.findByPublishedTrueOrderByCreatedAtDesc();
+        java.util.Set<String> allTags = new java.util.LinkedHashSet<>();
+        for (Article article : articles) {
+            if (article.getTags() != null && !article.getTags().isBlank()) {
+                for (String tag : article.getTags().split(",")) {
+                    if (tag != null && !tag.trim().isBlank()) {
+                        allTags.add(tag.trim());
+                    }
+                }
+            }
+        }
+        return ResponseEntity.ok(new ArrayList<>(allTags));
     }
     
     @GetMapping("/articles/{id}")
     public ResponseEntity<Article> getArticle(@PathVariable Long id) {
         return articleRepository.findById(id)
             .filter(Article::getPublished)
-            .map(ResponseEntity::ok)
+            .map(article -> {
+                // 增加阅读量
+                article.setViews(article.getViews() + 1);
+                articleRepository.save(article);
+                return ResponseEntity.ok(article);
+            })
             .orElse(ResponseEntity.notFound().build());
     }
     

@@ -154,12 +154,13 @@ export default function ArticleDetailPage() {
             <div className="flex items-center space-x-3 flex-wrap gap-2">
               <Tag className="w-5 h-5 text-gray-400" />
               {article.tags.split(',').map((tag, index) => (
-                <span 
-                  key={index} 
+                <Link
+                  key={index}
+                  to={`/blog?tag=${encodeURIComponent(tag.trim())}`}
                   className="px-4 py-1.5 bg-gray-100 hover:bg-indigo-50 text-gray-600 hover:text-indigo-600 text-sm rounded-full cursor-pointer transition-colors"
                 >
                   #{tag.trim()}
-                </span>
+                </Link>
               ))}
             </div>
           </motion.div>

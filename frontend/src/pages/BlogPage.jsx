@@ -1,59 +1,92 @@
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import ArticleCard from '../components/ArticleCard'
-import { Search, Filter, Grid3x3, LayoutList, FileText, Sparkles } from 'lucide-react'
+import { Search, Filter, Grid3x3, LayoutList, FileText, Sparkles, Tag, X } from 'lucide-react'
 import { useLanguage } from '../contexts/LanguageContext'
 import { useTranslation } from '../i18n/translations'
 
 export default function BlogPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [articles, setArticles] = useState([])
   const [filteredArticles, setFilteredArticles] = useState([])
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
+  const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') || '')
   const [viewMode, setViewMode] = useState('grid')
   const [categories, setCategories] = useState([])
+  const [allTags, setAllTags] = useState([])
   const { language } = useLanguage()
   const { t } = useTranslation()
 
+  // 从 URL 参数同步 selectedTag
   useEffect(() => {
-    // 使用真实后端 API
-    fetch(`/api/public/articles?page=${page}&size=9`)
+    const tagFromUrl = searchParams.get('tag')
+    if (tagFromUrl) {
+      setSelectedTag(tagFromUrl)
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    // 构建请求 URL
+    let url = `/api/public/articles?page=${page}&size=9`
+    if (selectedTag) {
+      url += `&tag=${encodeURIComponent(selectedTag)}`
+    }
+
+    fetch(url)
       .then(res => res.json())
       .then(data => {
-        setArticles(data.content || [])
-        setFilteredArticles(data.content || [])
+        const articleList = data.content || []
+        setArticles(articleList)
         setTotalPages(data.totalPages || 0)
-        
+
         // 提取分类
-        const cats = new Set((data.content || []).map(a => a.category).filter(Boolean))
+        const cats = new Set(articleList.map(a => a.category).filter(Boolean))
         const allCats = [t('common.all'), ...Array.from(cats)]
         setCategories(allCats)
-        setSelectedCategory(t('common.all'))
+        if (!selectedCategory || !cats.has(selectedCategory)) {
+          setSelectedCategory(t('common.all'))
+        }
       })
       .catch(() => {
-        // 如果后端不可用，使用 mock 数据
         import('../api/mockApi').then(module => {
           const api = module.default
           const allArticles = api.getArticles()
-          setArticles(allArticles)
-          setFilteredArticles(allArticles)
+
+          // 如果有选中的标签，在 mock 数据中也过滤
+          const result = selectedTag
+            ? allArticles.filter(a => a.tags?.includes(selectedTag))
+            : allArticles
+
+          setArticles(result)
           
-          const cats = new Set(allArticles.map(a => a.category).filter(Boolean))
+          const cats = new Set(result.map(a => a.category).filter(Boolean))
           const allCats = [t('common.all'), ...Array.from(cats)]
           setCategories(allCats)
           setSelectedCategory(t('common.all'))
         })
       })
-  }, [page, language])
 
-  // 搜索和过滤
+    // 加载所有标签（用于标签云）
+    fetch('/api/public/tags')
+      .then(res => res.json())
+      .then(tags => {
+        if (Array.isArray(tags)) {
+          setAllTags(tags)
+        }
+      })
+      .catch(() => {})
+  }, [page, language, selectedTag])
+
+  // 搜索和分类过滤（前端过滤，不影响标签筛选因为后端已处理）
   useEffect(() => {
     let result = articles
 
     if (searchTerm) {
-      result = result.filter(article => 
+      result = result.filter(article =>
         article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         article.summary?.toLowerCase().includes(searchTerm.toLowerCase())
       )
@@ -65,6 +98,26 @@ export default function BlogPage() {
 
     setFilteredArticles(result)
   }, [searchTerm, selectedCategory, articles, language])
+
+  // 点击标签
+  const handleTagClick = (tag) => {
+    if (selectedTag === tag) {
+      // 取消选中
+      setSelectedTag('')
+      setSearchParams({})
+    } else {
+      setSelectedTag(tag)
+      setSearchParams({ tag })
+      setPage(0)
+    }
+  }
+
+  // 清除标签筛选
+  const clearTagFilter = () => {
+    setSelectedTag('')
+    setSearchParams({})
+    setPage(0)
+  }
 
   return (
     <div className="min-h-screen relative">
@@ -103,19 +156,19 @@ export default function BlogPage() {
           className="mb-12"
         >
           <div className="card-glass p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              {/* 搜索框 */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder={t('blog.searchPlaceholder')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/50 border border-white/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
-                />
-              </div>
+            {/* 搜索框 */}
+            <div className="flex-1 relative mb-4">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder={t('blog.searchPlaceholder')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-xl bg-white/50 border border-white/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all"
+              />
+            </div>
 
+            <div className="flex flex-col gap-4">
               {/* 分类筛选 */}
               <div className="flex items-center gap-2 flex-wrap">
                 <Filter className="w-5 h-5 text-gray-400" />
@@ -135,6 +188,58 @@ export default function BlogPage() {
                   </motion.button>
                 ))}
               </div>
+
+              {/* 标签云 */}
+              {allTags.length > 0 && (
+                <div className="flex items-start gap-2 flex-wrap pt-3 border-t border-gray-100/50">
+                  <Tag className="w-5 h-5 text-gray-400 mt-1.5" />
+                  {allTags.slice(0, 15).map((tag) => (
+                    <motion.button
+                      key={tag}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => handleTagClick(tag)}
+                      className={`px-3 py-1.5 text-sm rounded-full transition-all ${
+                        selectedTag === tag
+                          ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md'
+                          : 'bg-white/60 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200 border border-transparent'
+                      }`}
+                    >
+                      #{tag}
+                    </motion.button>
+                  ))}
+                  {selectedTag && (
+                    <motion.button
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      onClick={clearTagFilter}
+                      className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors ml-2"
+                    >
+                      <X className="w-3 h-3" />
+                      清除标签
+                    </motion.button>
+                  )}
+                </div>
+              )}
+
+              {/* 当前选中的标签提示 */}
+              {selectedTag && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center justify-between px-4 py-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-100"
+                >
+                  <span className="text-sm text-gray-700">
+                    正在查看标签 <strong className="text-emerald-600">#{selectedTag}</strong> 相关文章
+                  </span>
+                  <button
+                    onClick={clearTagFilter}
+                    className="text-sm text-emerald-600 hover:text-emerald-800 font-medium"
+                  >
+                    查看全部 →
+                  </button>
+                </motion.div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -210,7 +315,7 @@ export default function BlogPage() {
         </AnimatePresence>
 
         {/* 分页 */}
-        {totalPages > 1 && (
+        {!selectedTag && totalPages > 1 && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
