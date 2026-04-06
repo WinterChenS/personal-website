@@ -16,7 +16,7 @@
 - Spring Boot 3.2
 - Spring Security
 - JWT Authentication
-- H2 Database
+- MySQL 8.4
 
 ## 快速开始
 
@@ -24,6 +24,7 @@
 - Java 21+
 - Node.js 18+
 - Maven 3.8+
+- MySQL 8.0+
 
 ### 一键启动
 
@@ -58,12 +59,77 @@ npm run dev
 - 前端展示页: http://localhost:3000
 - 管理后台: http://localhost:3000/admin
 - 后端 API: http://localhost:8080
-- H2 控制台: http://localhost:8080/h2-console
 
 ## 默认账号
 
 - 用户名: `admin`
 - 密码: `admin123`
+
+## 截图预览
+
+### 个人主页
+
+<p align="center">
+  <img src="docs/screenshots/01-home-hero.png" alt="首页 - Hero区域" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/02-home-stats-skills.png" alt="首页 - 数据统计与技能卡片" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/03-home-skills-articles.png" alt="首页 - 技能进度与最新文章" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/04-home-projects-footer.png" alt="首页 - 项目展示与页脚" width="800" />
+</p>
+
+### 博客与项目
+
+<p align="center">
+  <img src="docs/screenshots/05-blog-list.png" alt="博客列表 - 标签云筛选" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/06-projects-page.png" alt="项目展示页面" width="800" />
+</p>
+
+### 管理后台
+
+<p align="center">
+  <img src="docs/screenshots/07-admin-login.png" alt="管理后台 - 登录页" width="600" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/08-admin-dashboard.png" alt="管理后台 - 数据概览" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/09-admin-articles.png" alt="管理后台 - 文章管理" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/10-admin-projects.png" alt="管理后台 - 项目管理" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/11-admin-skills.png" alt="管理后台 - 技能管理" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/12admin-themes.png" alt="管理后台 - 主题管理" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/13-admin-profile.png" alt="管理后台 - 个人信息" width="800" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/14-admin-profile-detail.png" alt="管理后台 - 个人信息详情" width="800" />
+</p>
+
+---
 
 ## 功能特性
 
@@ -85,19 +151,9 @@ npm run dev
 ```
 personal-website/
 ├── backend/                # Spring Boot 后端
-│   ├── src/
-│   │   └── main/
-│   │       ├── java/
-│   │       └── resources/
-│   │           ├── application.yml
-│   │           └── application-prod.yml
-│   └── pom.xml
 ├── frontend/               # React 前端
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── App.jsx
-│   └── package.json
+├── docs/                   # 文档与截图
+│   └── screenshots/        # 页面截图预览
 ├── docker/                 # Docker 配置文件
 │   ├── nginx.conf          # Nginx 配置
 │   └── supervisord.conf    # Supervisor 配置
@@ -112,9 +168,24 @@ personal-website/
 
 ## 数据库
 
-默认使用 H2 内存数据库，数据存储在 `./data/personal_website.mv.db`
+使用 **MySQL 8.4** 作为持久化数据库，请确保 MySQL 服务已启动并创建对应数据库。
 
-首次启动会自动创建示例数据。
+### 数据库配置
+
+修改 `backend/src/main/resources/application.yml`：
+
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/personal_website?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8
+    username: root
+    password: your_password
+  jpa:
+    hibernate:
+      ddl-auto: update
+```
+
+首次启动会自动创建数据表。
 
 ## Docker 部署
 
@@ -136,7 +207,6 @@ docker-compose down
 - 前端展示页: http://localhost
 - 后端 API: http://localhost:8080
 - 管理后台: http://localhost/admin
-- H2 控制台: http://localhost/h2-console
 
 ### Docker 架构说明
 
@@ -146,8 +216,8 @@ docker-compose down
 
 ### 数据持久化
 
-- `./data`: H2 数据库文件
 - `./logs`: 应用日志
+- MySQL 数据库：数据持久存储在 MySQL 服务器中
 
 ### 手动构建镜像
 
@@ -166,7 +236,12 @@ server:
 
 spring:
   datasource:
-    url: jdbc:h2:file:./data/personal_website
+    url: jdbc:mysql://localhost:3306/personal_website?useSSL=false&serverTimezone=Asia/Shanghai&characterEncoding=utf-8
+    username: root
+    password: your_password
+  jpa:
+    hibernate:
+      ddl-auto: update
 ```
 
 ## 许可证
