@@ -10,6 +10,7 @@ export default function SkillManager() {
   const [showModal, setShowModal] = useState(false)
   const [editingSkill, setEditingSkill] = useState(null)
   const [form, setForm] = useState({ name: '', category: '', proficiency: 80, displayOrder: 0 })
+
   const token = localStorage.getItem('token')
 
   useEffect(() => { fetchSkills() }, [])
@@ -17,12 +18,34 @@ export default function SkillManager() {
   const fetchSkills = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/api/admin/skills`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      setSkills(await res.json() || [])
+      const tokenValue = localStorage.getItem('token')
+      const headers = {}
+      if (tokenValue) {
+        headers['Authorization'] = `Bearer ${tokenValue}`
+      }
+      
+      const res = await fetch(`${API_BASE}/api/admin/skills`, { headers })
+      
+      if (!res.ok) {
+        console.error('获取技能列表失败:', res.status, res.statusText)
+        setSkills([])
+        return
+      }
+      
+      const text = await res.text()
+      let data
+      try {
+        data = JSON.parse(text)
+      } catch {
+        console.error('Invalid JSON response:', text)
+        setSkills([])
+        return
+      }
+      
+      setSkills(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error('获取技能列表失败:', err)
+      setSkills([])
     } finally {
       setLoading(false)
     }

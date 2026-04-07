@@ -10,7 +10,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`${API_BASE}/api/admin/articles?page=0&size=1`, {
+      fetch(`${API_BASE}/api/admin/articles?page=0&size=100`, {
         headers: { 'Authorization': `Bearer ${token}` }
       }).then(r => r.json()),
       fetch(`${API_BASE}/api/admin/projects`, {
@@ -20,11 +20,13 @@ export default function Dashboard() {
         headers: { 'Authorization': `Bearer ${token}` }
       }).then(r => r.json()),
     ]).then(([articles, projects, skills]) => {
+      const articlesList = Array.isArray(articles) ? articles : (articles.content || [])
+      const totalViews = articlesList.reduce((sum, article) => sum + (article.views || 0), 0)
       setStats({
-        articles: articles.totalElements || 0,
+        articles: articles.totalElements || articlesList.length || 0,
         projects: projects.length || 0,
         skills: skills.length || 0,
-        views: 0
+        views: totalViews
       })
     }).catch(err => console.error('获取统计失败:', err))
       .finally(() => setLoading(false))

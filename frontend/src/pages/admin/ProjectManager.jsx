@@ -18,6 +18,7 @@ export default function ProjectManager() {
     featured: false, 
     displayOrder: 0 
   })
+
   const token = localStorage.getItem('token')
 
   useEffect(() => { fetchProjects() }, [])
@@ -25,13 +26,36 @@ export default function ProjectManager() {
   const fetchProjects = async () => {
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/api/admin/projects`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      })
-      const data = await res.json()
-      setProjects(data || [])
+      const tokenValue = localStorage.getItem('token')
+      const headers = {}
+      if (tokenValue) {
+        headers['Authorization'] = `Bearer ${tokenValue}`
+      }
+      
+      const res = await fetch(`${API_BASE}/api/admin/projects`, { headers })
+      
+      if (!res.ok) {
+        console.error('获取项目列表失败:', res.status, res.statusText)
+        const errorText = await res.text()
+        console.error('Error response:', errorText)
+        setProjects([])
+        return
+      }
+      
+      const text = await res.text()
+      let data
+      try {
+        data = JSON.parse(text)
+      } catch {
+        console.error('Invalid JSON response:', text)
+        setProjects([])
+        return
+      }
+      
+      setProjects(Array.isArray(data) ? data : (data.content || []))
     } catch (err) {
       console.error('获取项目列表失败:', err)
+      setProjects([])
     } finally {
       setLoading(false)
     }

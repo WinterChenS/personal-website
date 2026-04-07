@@ -14,9 +14,9 @@ export default function ThemeManager() {
     getActiveTheme 
   } = useTheme()
   
+  const token = localStorage.getItem('token')
   const [saving, setSaving] = useState(false)
   const [previewTheme, setPreviewTheme] = useState(null)
-  const token = localStorage.getItem('token')
 
   const activeTheme = previewTheme || getActiveTheme()
 
@@ -35,7 +35,6 @@ export default function ThemeManager() {
   const handleSaveToBackend = async () => {
     setSaving(true)
     try {
-      const token = localStorage.getItem('token')
       const themeData = customTheme ? { custom: customTheme } : { preset: currentTheme }
       
       console.log('Saving theme to backend:', themeData)

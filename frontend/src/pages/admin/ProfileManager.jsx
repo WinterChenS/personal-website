@@ -13,10 +13,17 @@ export default function ProfileManager() {
   const token = localStorage.getItem('token')
 
   useEffect(() => {
+    const tokenValue = localStorage.getItem('token')
     fetch(`${API_BASE}/api/admin/profile`, {
-      headers: { 'Authorization': `Bearer ${token}` }
+      headers: { 'Authorization': `Bearer ${tokenValue}` }
     })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          console.error('获取profile失败:', res.status, res.statusText)
+          return {}
+        }
+        return res.json()
+      })
       .then(data => {
         setProfile(data)
         setForm({
